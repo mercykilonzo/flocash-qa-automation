@@ -76,7 +76,7 @@ def test_create_bank_wallet(config, auth, headers):
     payload = {
         "bank": {
             "bankName" : "Equity Bank API",
-		    "accountNumber" : "0151016900160",
+		    "accountNumber" : "0151016900161",
 		    "accountHolder" : "Shabiha Assyrian",
 		    "swiftCode" : "ghhhg"
         }
@@ -91,7 +91,7 @@ def test_create_mobile_wallet(config, auth, headers):
     url = "https://sandbox.flocash.com/rest/api/users/mobileWallet"
     payload = {
         "mobileWallet": {
-            "walletNumber": "015101690250",
+            "walletNumber": "015101690251",
             "accountName": "Shabiha",
             "operatorName": "MPESA",
             "paybillNumber": "12343335"
