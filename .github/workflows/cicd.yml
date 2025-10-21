@@ -49,4 +49,4 @@ jobs:
           path: reports/test_report.html
 
       - name: Show Report Path in Logs
-        run: echo " Test report saved as artifact: pytest-report”
+        run: echo "Test report saved as artifact: pytest-report"
