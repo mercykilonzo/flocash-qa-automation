@@ -11,9 +11,8 @@ def test_create_vcn(config, auth, headers):
     print("Created VCN Token:", token)
 
 
-def test_topup_vcn_card_load(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc" 
-    url = f"{config.base_url}/vcns/{token}/load"
+def test_topup_vcn_card_load(config, auth, headers, vcn_token):
+    url = f"{config.base_url}/vcns/{vcn_token}/load"
     payload = {
         "load": {"amount": 10000, "currency": "ETB", "remark": "test"},
         "payOption": {"id": 123},
@@ -26,15 +25,15 @@ def test_topup_vcn_card_load(config, auth, headers):
     assert 'order' in data or 'status' in data, data
 
 
-def test_topup_vcn_mobile_load(config, auth, headers):
-    create_url = f"{config.base_url}/vcns"
-    create_response = requests.post(create_url, headers=headers, auth=auth, timeout=config.timeout)
-    assert create_response.status_code in (200, 201), f"Failed to create new VCN for mobile: {create_response.status_code} {create_response.text}"
-    token = create_response.json()["vcn"]["token"]
-    print("New VCN token for mobile:", token)
+def test_topup_vcn_mobile_load(config, auth, headers, vcn_token):
+    # create_url = f"{config.base_url}/vcns"
+    # create_response = requests.post(create_url, headers=headers, auth=auth, timeout=config.timeout)
+    # assert create_response.status_code in (200, 201), f"Failed to create new VCN for mobile: {create_response.status_code} {create_response.text}"
+    # token = create_response.json()["vcn"]["token"]
+    # print("New VCN token for mobile:", token)
 
 
-    url = f"{config.base_url}/vcns/{token}/load"
+    url = f"{config.base_url}/vcns/{vcn_token}/load"
     payload = {
         "load": {"amount": 10, "currency": "ETB", "remark": "test"},
         "payOption": {"id": 20},
@@ -75,7 +74,7 @@ def test_create_bank_wallet(config, auth, headers):
     payload = {
         "bank": {
             "bankName" : "Equity Bank API",
-		    "accountNumber" : "0151016900112",
+		    "accountNumber" : "0151016900115",
 		    "accountHolder" : "Shabiha Assyrian",
 		    "swiftCode" : "ghhhg"
         }
@@ -90,7 +89,7 @@ def test_create_mobile_wallet(config, auth, headers):
     url = "https://sandbox.flocash.com/rest/api/users/mobileWallet"
     payload = {
         "mobileWallet": {
-            "walletNumber": "015101690212",
+            "walletNumber": "015101690214",
             "accountName": "Shabiha",
             "operatorName": "MPESA",
             "paybillNumber": "12343335"
