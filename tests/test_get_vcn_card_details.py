@@ -20,9 +20,8 @@ def test_transaction_history(config, auth, headers, vcn_token):
         data = tx_resp.json()
         assert isinstance(data, dict), "Expected JSON response for transactions"
 
-def test_get_vcn_card_balance(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc"  
-    url = f"{config.base_url}/vcns/{token}/balance"
+def test_get_vcn_card_balance(config, auth, headers, vcn_token):
+    url = f"{config.base_url}/vcns/{vcn_token}/balance"
     response = requests.get(url, headers=headers, auth=auth, timeout=config.timeout)
     print("get_vcn_card_balance:", response.status_code, response.text)
     assert response.status_code in (200, 404), f"get_vcn_card_balance failed: {response.status_code} {response.text}"
@@ -47,9 +46,8 @@ def test_get_states(config, auth, headers):
     data = resp.json()
     assert "states" in data or isinstance(data, dict)
 
-def test_card_statements(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc"
-    url = f"{config.base_url}/vcns/{token}/statements"
+def test_card_statements(config, auth, headers, vcn_token):
+    url = f"{config.base_url}/vcns/{vcn_token}/statements"
     resp = requests.get(url, headers=headers, auth=auth, timeout=config.timeout)
     print("card_statements:", resp.status_code, resp.text)
     assert resp.status_code in (200, 404), f"card_statements failed: {resp.status_code} {resp.text}"    
