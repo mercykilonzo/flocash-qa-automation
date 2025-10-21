@@ -27,14 +27,13 @@ def test_topup_vcn_card_load(config, auth, headers):
 
 
 def test_topup_vcn_mobile_load(config, auth, headers):
-    # Step 1: Create a new VCN
     create_url = f"{config.base_url}/vcns"
     create_response = requests.post(create_url, headers=headers, auth=auth, timeout=config.timeout)
     assert create_response.status_code in (200, 201), f"Failed to create new VCN for mobile: {create_response.status_code} {create_response.text}"
     token = create_response.json()["vcn"]["token"]
     print("New VCN token for mobile:", token)
 
-    # Step 2: Use it for mobile load
+
     url = f"{config.base_url}/vcns/{token}/load"
     payload = {
         "load": {"amount": 10, "currency": "ETB", "remark": "test"},
@@ -76,7 +75,7 @@ def test_create_bank_wallet(config, auth, headers):
     payload = {
         "bank": {
             "bankName" : "Equity Bank API",
-		    "accountNumber" : "0151016900111",
+		    "accountNumber" : "0151016900112",
 		    "accountHolder" : "Shabiha Assyrian",
 		    "swiftCode" : "ghhhg"
         }
@@ -91,7 +90,7 @@ def test_create_mobile_wallet(config, auth, headers):
     url = "https://sandbox.flocash.com/rest/api/users/mobileWallet"
     payload = {
         "mobileWallet": {
-            "walletNumber": "015101690211",
+            "walletNumber": "015101690212",
             "accountName": "Shabiha",
             "operatorName": "MPESA",
             "paybillNumber": "12343335"
