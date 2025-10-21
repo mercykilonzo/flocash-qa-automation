@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
-      - master
+      - develop
   pull_request:
 
 jobs:
   build-and-test:
+    name: Run Pytest Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -25,12 +26,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Pytest with HTML report
-        run: |
-          pytest --html=reports/test_report.html --self-contained-html
+      - name: Create Reports Directory
+        run: mkdir -p reports
 
-      - name: Upload Test Report
+      - name: Run Pytest with HTML Report
+        env:
+          BASIC_AUTH_USERNAME: ${{ secrets.BASIC_AUTH_USERNAME }}
+          BASIC_AUTH_PASSWORD: ${{ secrets.BASIC_AUTH_PASSWORD }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: |
+          pytest -v --maxfail=3 --disable-warnings --html=reports/test_report.html --self-contained-html
+
+      - name: Upload Pytest HTML Report
         uses: actions/upload-artifact@v4
         with:
           name: pytest-report
           path: reports/test_report.html
+
+      - name: Show Report Path in Logs
+        run: echo " Test report saved as artifact: pytest-report”
