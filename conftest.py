@@ -1,5 +1,6 @@
 import os
 import pytest
+import requests
 from dotenv import load_dotenv
 from src.config import Config
 from src.helpers import AuthHelper
@@ -26,3 +27,14 @@ def auth(auth_helper):
 @pytest.fixture
 def headers(auth_helper):
     return auth_helper.build_headers()
+
+@pytest.fixture
+def vcn_token(config, auth, headers):
+    url = f"{config.base_url}/vcns"
+    resp = requests.post(url, headers=headers, auth=auth, timeout=config.timeout)
+    assert resp.status_code in (200, 201), f"Failed to create VCN: {resp.status_code} {resp.text}"
+    token = resp.json()["vcn"]["token"]
+    yield token
+
+    cleanup_url = f"{config.base_url}/vcns/{token}/deactivate"
+    requests.post(cleanup_url, headers=headers, auth=auth, timeout=config.timeout)

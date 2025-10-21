@@ -7,23 +7,21 @@ def test_list_vcns(config, auth, headers):
     data = resp.json()
     assert 'vcns' in data, data
 
-def test_get_vcn_show_template(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc"
-    url = f"{config.base_url}/vcns/{token}/show"
+def test_get_vcn_show_template(config, auth, headers, vcn_token):
+    url = f"{config.base_url}/vcns/{vcn_token}/show"
     resp = requests.get(url, headers=headers, auth=auth, timeout=config.timeout)
     assert resp.status_code in (200,404), f"Show vcn failed: {resp.status_code} {resp.text}"
 
-def test_transaction_history(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc"
-    tx_url = f"{config.base_url}/vcns/{token}/transactions"
-    tx_resp = requests.get(tx_url, headers=headers, auth=auth, timeout=config.timeout)
+def test_transaction_history(config, auth, headers, vcn_token):
+    url = f"{config.base_url}/vcns/{vcn_token}/transactions"
+    tx_resp = requests.get(url, headers=headers, auth=auth, timeout=config.timeout)
     assert tx_resp.status_code in (200,404), f"Transactions failed: {tx_resp.status_code} {tx_resp.text}"
     if tx_resp.status_code == 200:
         data = tx_resp.json()
         assert isinstance(data, dict), "Expected JSON response for transactions"
 
 def test_get_vcn_card_balance(config, auth, headers):
-    token = "d4d4ega0tugsrqmo1mu4an28gc"  # replace with your token
+    token = "d4d4ega0tugsrqmo1mu4an28gc"  
     url = f"{config.base_url}/vcns/{token}/balance"
     response = requests.get(url, headers=headers, auth=auth, timeout=config.timeout)
     print("get_vcn_card_balance:", response.status_code, response.text)
