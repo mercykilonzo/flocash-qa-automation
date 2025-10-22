@@ -5,11 +5,6 @@ from dotenv import load_dotenv
 from src.config import Config
 from src.helpers import AuthHelper
 
-import collections
-if not hasattr(collections, 'Mapping'):
-    import collections.abc
-    collections.Mapping = collections.abc.Mapping
-
 
 load_dotenv()
 
