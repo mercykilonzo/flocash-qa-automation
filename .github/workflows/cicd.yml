@@ -29,12 +29,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Pytest with HTML report
+      - name: Run Pytest with Allure reporting
         run: |
-          pytest --html=reports/test_report.html --self-contained-html
+          pytest --alluredir=reports/allure-results
 
-      - name: Upload Test Report
-        uses: actions/upload-artifact@v4
+      - name: Generate and Publish Allure Report
+        uses: simple-elf/allure-report-action@v1.7
         with:
-          name: pytest-report
-          path: reports/test_report.html
+          allure_results: reports/allure-results
+          allure_report: reports/allure-report
+          github_token: ${{ secrets.GITHUB_TOKEN }}
