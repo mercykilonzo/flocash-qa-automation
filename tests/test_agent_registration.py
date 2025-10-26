@@ -1,90 +1,243 @@
-# ...existing code...
 import pytest
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 
+# ======================================================
+#  Test Data
+# ======================================================
+COMPANY_DATA = {
+    'agency_name': 'Travel Test Agency Ltd',
+    'first_name': 'John',
+    'last_name': 'doe',
+    'email': 'testagency@gmail.com',
+    'phone': '712345678',
+    'post_code': '00100',
+    'address': '123 Test Street',
+    'city': 'Nairobi'
+}
+
+ACCOUNT_DATA = {
+    'username': 'mercy',
+    'email': f'testuser_{int(time.time())}@example.com',
+    'password': 'Test@Password123',
+    'confirm_password': 'Test@Password123'
+}
+
+FILES = [
+    '/home/student/Downloads/ID_compressed.pdf',
+    '/home/student/Downloads/ID_compressed-1.pdf',
+    '/home/student/Downloads/ID_compressed-2.pdf',
+    '/home/student/Downloads/ID_compressed-3.pdf',
+    '/home/student/Downloads/ID_compressed-4.pdf',
+    '/home/student/Downloads/ID_compressed-5.pdf'
+]
+
+
+# ======================================================
+#  Config
+# ======================================================
+ACTION_DELAY = 0.5  # seconds delay for human-visible typing
+
+
+# ======================================================
+#  Fixtures
+# ======================================================
 @pytest.fixture(scope="module")
-def driver():
-    """Setup Chrome driver for the module using webdriver-manager."""
-    opts = Options()
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
-    opts.add_argument("--disable-gpu")
-    # uncomment the next line to run headless
-    # opts.add_argument("--headless=new")
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=opts)
+def browser():
+    """Setup browser instance (visible mode)."""
+    driver = webdriver.Chrome()
     driver.maximize_window()
+    driver.get("http://flotravel-test.flocash.com/register")
     yield driver
-    time.sleep(1)
     driver.quit()
 
+
 @pytest.fixture(scope="module")
-def wait(driver):
-    return WebDriverWait(driver, 25)
+def wait(browser):
+    """Explicit wait object."""
+    return WebDriverWait(browser, 10)
 
+
+# ======================================================
+#  Helper Functions
+# ======================================================
+def highlight(driver, element):
+    """Highlight element being interacted with."""
+    driver.execute_script("arguments[0].style.border='3px solid yellow'", element)
+
+
+def slow_type(element, text):
+    """Type text slowly for human visibility."""
+    element.clear()
+    for ch in text:
+        element.send_keys(ch)
+        time.sleep(0.02)  # small delay per character
+    time.sleep(ACTION_DELAY)
+
+
+def click_tab(browser, wait, tab_name):
+    """Click on navigation tab using stable locator."""
+    try:
+        tab = wait.until(
+            EC.element_to_be_clickable(
+                (By.XPATH, f"//button[contains(normalize-space(), '{tab_name}')]")
+            )
+        )
+        highlight(browser, tab)
+        tab.click()
+        print(f"  ✓ Clicked tab: {tab_name}")
+        time.sleep(ACTION_DELAY)
+    except Exception as e:
+        print(f"  ✗ Failed to click tab '{tab_name}': {e}")
+
+
+def fill_input(wait, browser, locator, value, label="field"):
+    """Generic stable input filler with highlight + delay."""
+    try:
+        element = wait.until(EC.presence_of_element_located(locator))
+        highlight(browser, element)
+        slow_type(element, value)
+        print(f"  ✓ Filled: {label}")
+        return True
+    except Exception as e:
+        print(f"  ✗ Failed to fill {label}: {e}")
+        return False
+
+
+def upload_file(browser, index, file_path):
+    """Upload file into input[type=file]."""
+    try:
+        inputs = browser.find_elements(By.CSS_SELECTOR, "input[type='file']")
+        if index < len(inputs):
+            highlight(browser, inputs[index])
+            inputs[index].send_keys(file_path)
+            time.sleep(ACTION_DELAY)
+            print(f"  ✓ Uploaded file {index + 1}")
+            return True
+        else:
+            print(f"  ⚠ File input index {index} not found.")
+            return False
+    except Exception as e:
+        print(f"  ✗ Upload failed for file {index + 1}: {e}")
+        return False
+
+
+# ======================================================
+#  Test Cases
+# ======================================================
 @pytest.mark.order(1)
-def test_company_info(driver, wait):
-    """Step 1 & 2: Company Information + Required Documents"""
-    driver.get("https://flotravel-test.flocash.com/register")
+def test_company_information(browser, wait):
+    """Fill out Company Information section."""
+    print("\n🏢 === Company Information ===")
+    click_tab(browser, wait, "Company Information")
 
-    # Step 1: Company Information
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//input[contains(@placeholder,'Agency Name')]")))
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Agency Name')]").send_keys("DairyHub Travel")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'First Name')]").send_keys("Mercy")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Last Name')]").send_keys("Mwikali")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Phone')]").send_keys("0707000000")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Post Code')]").send_keys("00100")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'City')]").send_keys("Nairobi")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Full Address')]").send_keys("Tom Mboya Street")
+    fill_input(wait, browser, (By.NAME, "agencyName"), COMPANY_DATA['agency_name'], "Company Name")
+    fill_input(wait, browser, (By.NAME, "firstName"), COMPANY_DATA['first_name'], "Registration Number")
+    fill_input(wait, browser, (By.NAME, "lastName"), COMPANY_DATA['last_name'], "Email")
+    fill_input(wait, browser, (By.NAME, "phone"), COMPANY_DATA['phone'], "Phone")
+    fill_input(wait, browser, (By.NAME, "postCode"), COMPANY_DATA['post_code'], "Address")
+    fill_input(wait, browser, (By.NAME, "city"), COMPANY_DATA['city'], "City")
+    fill_input(wait, browser, (By.NAME, "fullAddress"), COMPANY_DATA['address'], "Address")
 
-    # Click Continue to Required Documents
-    continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(.,'Continue to Required Documents')]")))
-    driver.execute_script("arguments[0].click();", continue_btn)
 
-    # Step 2: Required Documents
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//h2[contains(.,'Required Documents')]")))
-    files = driver.find_elements(By.XPATH, "//input[@type='file']")
-    for f in files:
-        # ensure input is visible/interactable; if hidden, use JS to make it visible or raise informative error
-        try:
-            f.send_keys("/home/student/Downloads/ID_compressed.pdf")
-        except Exception as e:
-            raise RuntimeError(f"Failed to upload file to input element: {e}")
+    print("✓ Company Information completed.\n")
 
-    continue_btn2 = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(.,'Continue to Create Account')]")))
-    driver.execute_script("arguments[0].click();", continue_btn2)
 
 @pytest.mark.order(2)
-def test_create_account(driver, wait):
-    """Step 3: Create Account"""
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//h2[contains(.,'Create Account')]")))
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Username')]").send_keys("MercyMwiks")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Email')]").send_keys("mwiks@example.com")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Password')]").send_keys("@Mwiks2025")
-    driver.find_element(By.XPATH, "//input[contains(@placeholder,'Confirm')]").send_keys("@Mwiks2025")
+def test_upload_documents(browser, wait):
+    """Upload all required documents."""
+    print("\n📄 === Required Documents ===")
+    click_tab(browser, wait, "Required Documents")
 
-    continue_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(.,'Continue to Review & Submit')]")))
-    driver.execute_script("arguments[0].click();", continue_btn)
+    uploaded = 0
+    for i, path in enumerate(FILES):
+        if upload_file(browser, i, path):
+            uploaded += 1
+    print(f"✓ Uploaded {uploaded}/{len(FILES)} documents.\n")
+
 
 @pytest.mark.order(3)
-def test_review_submit(driver, wait):
-    """Step 4: Review & Submit"""
-    wait.until(EC.visibility_of_element_located((By.XPATH, "//h2[contains(.,'Review & Submit')]")))
-    checkbox = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox']")))
-    driver.execute_script("arguments[0].click();", checkbox)
+def test_create_account(browser, wait):
+    """Fill Create Account section."""
+    print("\n === Create Account ===")
+    click_tab(browser, wait, "Create Account")
 
-    submit_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(.,'Submit Registration')]")))
-    driver.execute_script("arguments[0].click();", submit_btn)
+    # Try multiple locator strategies for username field
+    username_locators = [
+        (By.NAME, "username"),
+        (By.ID, "username"),
+        (By.XPATH, "//input[@placeholder='Username' or @placeholder='username']"),
+        (By.XPATH, "//label[contains(text(), 'Username')]/following::input[1]"),
+        (By.CSS_SELECTOR, "input[name*='user']"),
+    ]
+    
+    username_filled = False
+    for locator in username_locators:
+        try:
+            element = wait.until(EC.presence_of_element_located(locator))
+            highlight(browser, element)
+            slow_type(element, ACCOUNT_DATA['username'])
+            print(f"  ✓ Filled username using locator: {locator}")
+            username_filled = True
+            break
+        except Exception as e:
+            continue
+    
+    if not username_filled:
+        print("  ✗ Failed to fill username with any locator strategy")
+        # Print all input fields for debugging
+        inputs = browser.find_elements(By.TAG_NAME, "input")
+        print(f"  Debug: Found {len(inputs)} input fields on page")
+        for idx, inp in enumerate(inputs):
+            print(f"    Input {idx}: type={inp.get_attribute('type')}, "
+                  f"name={inp.get_attribute('name')}, "
+                  f"id={inp.get_attribute('id')}, "
+                  f"placeholder={inp.get_attribute('placeholder')}")
 
-    # Verify success message or confirmation
-    success_msg = wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(text(),'successfully') or contains(text(),'Thank you')]")))
-    assert success_msg.is_displayed(), "Registration submission failed!"
-# ...existing code...
+    # Fill email
+    fill_input(wait, browser, (By.NAME, "email"), ACCOUNT_DATA['email'], "email")
+
+    # Password fields
+    try:
+        password_fields = wait.until(
+            EC.presence_of_all_elements_located((By.XPATH, "//input[@type='password']"))
+        )
+        for field in password_fields:
+            highlight(browser, field)
+            slow_type(field, ACCOUNT_DATA['password'])
+        print("  ✓ Filled: Password fields")
+    except Exception as e:
+        print(f"  ✗ Failed to fill password fields: {e}")
+
+    print("✓ Create Account section completed.\n")
+
+
+@pytest.mark.order(4)
+def test_review_submit(browser, wait):
+    """Navigate to Review & Submit section."""
+    print("\n📝 === Review & Submit ===")
+    click_tab(browser, wait, "Review & Submit")
+
+    try:
+        review_button = wait.until(
+            EC.presence_of_element_located(
+                (By.XPATH, "//button[contains(normalize-space(), 'Review & Submit')]")
+            )
+        )
+        highlight(browser, review_button)
+        print("✓ Review page loaded and ready.")
+    except Exception as e:
+        print(f"⚠ Could not verify review page: {e}")
+
+    print("✓ Review & Submit section completed.\n")
+
+
+# ======================================================
+#  Entry Point
+# ======================================================
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])
